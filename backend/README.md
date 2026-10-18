@@ -73,9 +73,21 @@ stays inside `TTS_DATA_DIR`.
 | `GET /api/system/status` | CPU, RAM, disk, GPU, cache usage |
 | `GET /api/logs`, `DELETE /api/logs` | Log tail / clear |
 | `WS /ws/logs` | Live log stream |
+| `GET /v1` | OpenAI-compatible API info (auth mode, endpoints) |
+| `POST /v1/audio/speech` | OpenAI-compatible speech synthesis — `input` (+ optional `output` format); see the root README for the full reference |
+| `GET /api/openai/status` | Public-API status: auth mode, active engine/voice, formats |
+| `GET/PUT /api/openai/config` | Active TTS configuration (engine, voice, defaults, auth mode) |
+| `PATCH /api/openai/config/auth` | Toggle "require API key" only |
+| `GET/POST /api/openai/keys` | List / create API keys |
+| `PATCH/DELETE /api/openai/keys/{id}` | Rename, rate-limit, revoke or delete a key |
 
 Background work (installs, downloads, synthesis) runs through a small job
 manager; the frontend polls `GET /api/jobs/{id}` for progress.
+
+The `/v1` speech endpoint is configured from the in-app **API** page (or the
+`/api/openai/*` endpoints): one engine + voice serves every request, API keys
+are optional by default, and clients only ever send `{"input": "..."}`. The
+root README has the complete client-facing API reference.
 
 ## Data layout
 
@@ -87,6 +99,9 @@ backend/data/
 ├── custom_voices/   # user-uploaded voices
 ├── audio/           # generated WAV files
 ├── previews/        # cached voice previews
+├── api_audio/       # temporary API renders (mp3/wav/…), auto-deleted
+├── api_keys.json    # API keys + usage stats for /v1/audio/speech
+├── api_config.json  # active TTS config for /v1 (engine, voice, defaults)
 ├── history.json     # generation history
 └── logs/            # rotating text logs
 ```

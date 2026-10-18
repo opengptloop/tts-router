@@ -29,10 +29,13 @@ OUTPUTS_DIR = DATA_DIR / "audio"
 PREVIEWS_DIR = DATA_DIR / "previews"
 CUSTOM_VOICES_DIR = DATA_DIR / "custom_voices"
 LOGS_DIR = DATA_DIR / "logs"
+API_AUDIO_DIR = DATA_DIR / "api_audio"
 
 HISTORY_FILE = DATA_DIR / "history.json"
 SETTINGS_FILE = DATA_DIR / "settings.json"
 PIPER_CATALOG_FILE = DATA_DIR / "piper_catalog.json"
+API_KEYS_FILE = DATA_DIR / "api_keys.json"
+API_CONFIG_FILE = DATA_DIR / "api_config.json"
 
 HOST = os.environ.get("TTS_HOST", "127.0.0.1")
 PORT = int(os.environ.get("TTS_PORT", "8000"))
@@ -67,6 +70,7 @@ def ensure_dirs() -> None:
         PREVIEWS_DIR,
         CUSTOM_VOICES_DIR,
         LOGS_DIR,
+        API_AUDIO_DIR,
     ):
         directory.mkdir(parents=True, exist_ok=True)
 

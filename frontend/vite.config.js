@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       proxy: {
         '/api': { target, changeOrigin: true },
+        '/v1': { target, changeOrigin: true },
         '/ws': { target, ws: true, changeOrigin: true },
       },
     },
@@ -23,6 +24,7 @@ export default defineConfig(({ mode }) => {
       port: 4173,
       proxy: {
         '/api': { target, changeOrigin: true },
+        '/v1': { target, changeOrigin: true },
         '/ws': { target, ws: true, changeOrigin: true },
       },
     },

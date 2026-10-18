@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AudioLines,
+  Braces,
   Moon,
   ServerCog,
   Settings2,
@@ -12,6 +13,7 @@ import { Toasts } from './components/Toasts.jsx'
 import { StudioPage } from './pages/StudioPage.jsx'
 import { ModelsPage } from './pages/ModelsPage.jsx'
 import { LogsPage } from './pages/LogsPage.jsx'
+import { ApiPage } from './pages/ApiPage.jsx'
 
 export const AppContext = createContext(null)
 export const useApp = () => useContext(AppContext)
@@ -19,6 +21,7 @@ export const useApp = () => useContext(AppContext)
 const PAGES = {
   studio: { label: 'Studio', icon: AudioLines, title: 'Studio', subtitle: 'Generate speech with local models' },
   models: { label: 'Models & Config', icon: Settings2, title: 'Models & Config', subtitle: 'Install engines, manage voices and monitor the system' },
+  api: { label: 'API', icon: Braces, title: 'OpenAI-compatible API', subtitle: 'One base URL — clients generate speech, you configure everything here' },
   logs: { label: 'Logs', icon: Terminal, title: 'Live Logs', subtitle: 'Streaming backend logs' },
 }
 
@@ -190,6 +193,7 @@ export default function App() {
           <div className="content">
             {page === 'studio' && <StudioPage />}
             {page === 'models' && <ModelsPage />}
+            {page === 'api' && <ApiPage />}
             {page === 'logs' && <LogsPage />}
           </div>
         </main>

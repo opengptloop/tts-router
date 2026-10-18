@@ -7,6 +7,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,6 +18,7 @@ from .jobs import JOBS
 from .logbus import BUS, configure_logging
 from .model_manager import get_manager
 from .routers import generate, models, system, voices
+from .routers import openai_admin, openai_api
 
 logger = logging.getLogger("tts.main")
 
@@ -84,6 +86,15 @@ app.include_router(system.router)
 app.include_router(models.router)
 app.include_router(voices.router)
 app.include_router(generate.router)
+app.include_router(openai_admin.router)
+app.include_router(openai_api.router)
+
+# FastAPI's 422 validation shape must not leak onto the OpenAI-compatible
+# surface: /v1 clients always get {"error": {...}} bodies (400).
+app.add_exception_handler(
+    RequestValidationError,
+    openai_api.openai_validation_error_handler,
+)
 
 
 @app.websocket("/ws/logs")
