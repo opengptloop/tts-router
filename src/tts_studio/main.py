@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
@@ -119,7 +120,8 @@ async def websocket_logs(websocket: WebSocket) -> None:
 # Optional: serve a built frontend (single-service deployment)
 # ---------------------------------------------------------------------------
 
-_frontend_dist = config.BASE_DIR.parent / "frontend" / "dist"
+# The web UI ships inside the package (built at release time from frontend/).
+_frontend_dist = Path(__file__).resolve().parent / "frontend_dist"
 if _frontend_dist.is_dir():
     app.mount(
         "/assets",

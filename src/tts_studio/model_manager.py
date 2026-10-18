@@ -312,7 +312,7 @@ class ModelManager:
         env = {**os.environ, "PIP_DISABLE_PIP_VERSION_CHECK": "1", "PIP_NO_INPUT": "1"}
         process = subprocess.Popen(
             command,
-            cwd=str(config.BASE_DIR),
+            cwd=str(config.DATA_DIR),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,

@@ -1,8 +1,9 @@
 """Application paths and settings.
 
 All runtime data (models, downloaded voices, generated audio, logs) is kept
-inside ``backend/data`` by default so that everything stays local. Override
-with the ``TTS_DATA_DIR`` environment variable.
+inside ``~/.tts-studio`` by default so that everything stays local and the
+installed package never writes into ``site-packages``. Override with the
+``TTS_DATA_DIR`` environment variable or the ``--data-dir`` CLI flag.
 """
 
 from __future__ import annotations
@@ -10,12 +11,14 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 
 APP_NAME = "TTS Studio"
 APP_VERSION = "1.0.0"
 
-DATA_DIR = Path(os.environ.get("TTS_DATA_DIR", BASE_DIR / "data")).resolve()
+DATA_DIR = Path(
+    os.environ.get("TTS_DATA_DIR", str(Path.home() / ".tts-studio"))
+).resolve()
 
 # Keep every Hugging Face download (Kokoro weights, Kitten weights, Pocket
 # weights and voices) inside the local data directory. Must be set before

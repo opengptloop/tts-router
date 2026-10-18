@@ -8,6 +8,43 @@ machine, with no API keys and no data leaving your computer.
 ![stack](https://img.shields.io/badge/frontend-React%2019-61dafb)
 ![stack](https://img.shields.io/badge/engines-Kokoro%20·%20Kitten%20·%20Pocket%20·%20Piper-7c5cff)
 
+## Install & run
+
+```bash
+pip install tts-studio
+```
+
+Then launch it from any terminal:
+
+```bash
+tts-studio
+```
+
+Your browser opens the studio automatically. Everything — the web UI, the
+studio API and the OpenAI-compatible `/v1` speech API — is served from a
+**single local URL** (`http://127.0.0.1:8000` by default); there is no
+separate backend port to manage or expose. Runtime data (models, voices,
+audio, settings) lives in `~/.tts-studio`.
+
+CLI options:
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--port` | `8000` | Port to serve on (busy ports are skipped automatically) |
+| `--host` | `127.0.0.1` | Bind address (use `0.0.0.0` to share on your LAN) |
+| `--data-dir` | `~/.tts-studio` | Where models, voices and audio are stored |
+| `--no-browser` | — | Do not open the browser automatically |
+| `--version` | — | Print the version and exit |
+
+Engine packages are **not** bundled (they pull in PyTorch and friends), so a
+fresh install is lightweight. Install them from the in-app **Models & Config**
+page, or upfront with extras:
+
+```bash
+pip install "tts-studio[piper]"    # lightweight start
+pip install "tts-studio[all]"      # every engine
+```
+
 ## Features
 
 - **Four engines in one UI** — Kokoro-82M, KittenTTS 2 + 0.8 ONNX models,
@@ -49,36 +86,38 @@ Models page.
 - Optional `ffmpeg` binary — only needed for the `mp3`, `opus` and `aac`
   output formats (`wav`, `flac` and `pcm` always work)
 
-## Quickstart
-
-### 1. Backend
+## Development (from source)
 
 ```bash
-cd backend
-python -m venv ../.venv && source ../.venv/bin/activate
-pip install -e ".[all]"        # or ".[piper]" for a lightweight start
-python run.py                  # http://127.0.0.1:8000
+git clone https://github.com/opengptloop/tts-studio.git
+cd tts-studio
+
+# Backend: editable install with every engine (or ".[piper]" for a light start)
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[all]"
+
+# Frontend: build the bundle into src/tts_studio/frontend_dist
+cd frontend && npm install && npm run build
+cd ..
+rm -rf src/tts_studio/frontend_dist && cp -r frontend/dist src/tts_studio/frontend_dist
+
+# Run the whole app from source (same CLI as the published package)
+./start.sh                     # or: python -m tts_studio
 ```
 
 CPU-only tip: install torch first from the CPU wheel index to avoid pulling
-multi-GB CUDA libraries (see `backend/requirements.txt`).
+multi-GB CUDA libraries.
 
-### 2. Frontend
+For frontend development with hot reload:
 
 ```bash
 cd frontend
-npm install
-npm run dev                    # http://localhost:5173, proxies /api and /v1 to :8000
+npm run dev                    # http://localhost:5173, proxies /api, /v1 and /ws to :8000
 ```
 
-For a single-process deployment, build the frontend and start only the backend:
+while `tts-studio` (or `./start.sh`) serves the API on :8000.
 
-```bash
-npm run build                  # writes frontend/dist
-cd ../backend && python run.py # serves the built UI at http://127.0.0.1:8000
-```
-
-### 3. Use it
+### Use it
 
 1. Open the **Models & Config** page and install the engine(s) you want.
 2. Load a model variant (weights download on first load).
@@ -398,7 +437,7 @@ Saved configuration shape (`PUT /api/openai/config` body):
 - **Upgrading from the old mapping-based API?** `api_config.json` files with
   the legacy `mappings` schema are migrated automatically: the first enabled
   mapping becomes the active engine/voice, and the old defaults carry over.
-- CORS is open by default (`TTS_CORS_ORIGINS=*`, see `backend/README.md`),
+- CORS is open by default (`TTS_CORS_ORIGINS=*`, see `src/tts_studio/config.py`),
   so browser-based clients can call the endpoint directly.
 
 ---
@@ -406,16 +445,22 @@ Saved configuration shape (`PUT /api/openai/config` body):
 ## Project layout
 
 ```
-backend/    FastAPI app, engine adapters, job manager, log bus
-  app/engines/   kokoro / kitten / pocket / piper adapters + catalogs
-  app/routers/   system, models, voices, generate + OpenAI-compatible endpoints
-frontend/   React 19 + Vite single-page app
-  src/pages/     Studio, Models & Config, API, Logs
-  src/components/voice picker, modals, toasts, primitives
+src/tts_studio/         installable Python package (published to PyPI)
+  cli.py                the `tts-studio` command: one port, browser auto-open
+  main.py               FastAPI app - serves the API and the packaged web UI
+  engines/              kokoro / kitten / pocket / piper adapters + catalogs
+  routers/              system, models, voices, generate + OpenAI-compatible endpoints
+  frontend_dist/        built web UI, bundled into the wheel at release time
+frontend/               React 19 + Vite single-page app (source)
+  src/pages/            Studio, Models & Config, API, Logs
+  src/components/       voice picker, modals, toasts, primitives
 ```
 
-Runtime data (models, voices, audio, logs) lives in `backend/data/` — see
-`backend/README.md` for the backend API overview and configuration variables.
+Runtime data (models, voices, audio, logs) lives in `~/.tts-studio` — override
+with `TTS_DATA_DIR` or the `--data-dir` flag. Configuration variables are read
+from `TTS_*` environment variables (see `src/tts_studio/config.py`):
+`TTS_HOST`, `TTS_PORT`, `TTS_DATA_DIR`, `TTS_CORS_ORIGINS`,
+`TTS_PIPER_CATALOG_TTL`.
 
 ## Notes
 

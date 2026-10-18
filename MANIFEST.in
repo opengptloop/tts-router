@@ -1,0 +1,5 @@
+# Ship the built web UI inside both sdists and wheels.
+recursive-include src/tts_studio/frontend_dist *
+# Keep the frontend sources out of distributions; they are rebuilt at release time.
+prune frontend
+global-exclude *.pyc __pycache__ .DS_Store

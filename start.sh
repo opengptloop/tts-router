@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
-# Start TTS Studio: backend API + frontend dev server, shut down together.
+# Developer helper: run TTS Studio from this source tree.
+#
+# The published way to run the app is simply:
+#
+#     pip install tts-studio
+#     tts-studio
+#
+# This script is for hacking on the source: it installs the repo in editable
+# mode, builds the frontend bundle if it is missing, then launches the app.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BACKEND_DIR="$ROOT/backend"
-FRONTEND_DIR="$ROOT/frontend"
-BACKEND_HOST="${TTS_HOST:-127.0.0.1}"
-BACKEND_PORT="${TTS_PORT:-8000}"
-FRONTEND_PORT="${TTS_FRONTEND_PORT:-5173}"
 
 # --- pick a Python interpreter (override with PYTHON=/path/to/python) ------
 if [[ -n "${PYTHON:-}" ]]; then
   PY="$PYTHON"
 elif [[ -x "$ROOT/.venv/bin/python" ]]; then
   PY="$ROOT/.venv/bin/python"
-elif [[ -x "$BACKEND_DIR/.venv/bin/python" ]]; then
-  PY="$BACKEND_DIR/.venv/bin/python"
 else
   PY="$(command -v python3 || command -v python || true)"
 fi
@@ -24,54 +25,22 @@ if [[ -z "$PY" ]]; then
   exit 1
 fi
 
-if ! command -v npm >/dev/null 2>&1; then
-  echo "error: npm not found; install Node.js 20+" >&2
-  exit 1
-fi
-
-# --- dependencies (first run only) ------------------------------------------
+# --- editable install (first run only) ---------------------------------------
 if ! "$PY" -c 'import fastapi, uvicorn' >/dev/null 2>&1; then
-  echo ">> Installing backend dependencies..."
-  "$PY" -m pip install -e "$BACKEND_DIR"
-fi
-if [[ ! -d "$FRONTEND_DIR/node_modules" ]]; then
-  echo ">> Installing frontend dependencies..."
-  (cd "$FRONTEND_DIR" && npm install)
+  echo ">> Installing tts-studio in editable mode..."
+  "$PY" -m pip install -e "$ROOT"
 fi
 
-# --- start both processes ----------------------------------------------------
-BACKEND_PID=""
-FRONTEND_PID=""
+# --- rebuild the frontend bundle if it is missing ----------------------------
+if [[ ! -f "$ROOT/src/tts_studio/frontend_dist/index.html" ]]; then
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "error: frontend_dist missing and npm not found; install Node.js 20+ and run: (cd frontend && npm install && npm run build)" >&2
+    exit 1
+  fi
+  echo ">> Building frontend..."
+  (cd "$ROOT/frontend" && npm install --no-audit --no-fund && npm run build)
+  rm -rf "$ROOT/src/tts_studio/frontend_dist"
+  cp -r "$ROOT/frontend/dist" "$ROOT/src/tts_studio/frontend_dist"
+fi
 
-cleanup() {
-  trap - INT TERM EXIT
-  echo
-  echo ">> Shutting down..."
-  [[ -n "$BACKEND_PID" ]] && kill "$BACKEND_PID" 2>/dev/null || true
-  [[ -n "$FRONTEND_PID" ]] && kill "$FRONTEND_PID" 2>/dev/null || true
-  wait 2>/dev/null || true
-}
-trap cleanup INT TERM EXIT
-
-echo ">> Starting backend on http://$BACKEND_HOST:$BACKEND_PORT"
-(
-  cd "$BACKEND_DIR"
-  exec "$PY" run.py --host "$BACKEND_HOST" --port "$BACKEND_PORT"
-) &
-BACKEND_PID=$!
-
-echo ">> Starting frontend on http://localhost:$FRONTEND_PORT"
-(
-  cd "$FRONTEND_DIR"
-  export VITE_API_TARGET="http://$BACKEND_HOST:$BACKEND_PORT"
-  exec npm run dev -- --port "$FRONTEND_PORT" --strictPort
-) &
-FRONTEND_PID=$!
-
-echo
-echo "   Backend:  http://$BACKEND_HOST:$BACKEND_PORT  (API docs at /docs)"
-echo "   Frontend: http://localhost:$FRONTEND_PORT"
-echo "   Press Ctrl+C to stop both."
-echo
-
-wait -n
+exec "$PY" -m tts_studio "$@"
