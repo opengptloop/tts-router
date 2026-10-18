@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+frontend/dist/
+*.local
+
+# App data (models, voices, generated audio, logs)
+backend/data/
+
+# Env
+.env
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/

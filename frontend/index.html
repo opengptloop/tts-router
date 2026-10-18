@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="TTS Studio - run open-source text-to-speech models locally" />
+    <title>TTS Studio</title>
+    <script>
+      // Apply theme before first paint to avoid a flash.
+      try {
+        var theme = localStorage.getItem('tts-theme')
+        if (!theme) {
+          theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+        }
+        document.documentElement.dataset.theme = theme
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
