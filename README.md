@@ -4,11 +4,19 @@ A local-first web studio for open-source text-to-speech. Pick an engine, pick
 a voice (or clone one), type your text and get audio — all running on your own
 machine, with no API keys and no data leaving your computer.
 
+[![PyPI — version](https://img.shields.io/pypi/v/tts-studio?color=7c5cff&label=PyPI)](https://pypi.org/project/tts-studio/)
+[![Python versions](https://img.shields.io/pypi/pyversions/tts-studio)](https://pypi.org/project/tts-studio/)
+[![install command](https://img.shields.io/badge/install-pip%20install%20tts--studio-009688)](https://pypi.org/project/tts-studio/)
 ![stack](https://img.shields.io/badge/backend-FastAPI-009688)
 ![stack](https://img.shields.io/badge/frontend-React%2019-61dafb)
 ![stack](https://img.shields.io/badge/engines-Kokoro%20·%20Kitten%20·%20Pocket%20·%20Piper-7c5cff)
 
 ## Install & run
+
+TTS Studio is published on PyPI as
+[`tts-studio`](https://pypi.org/project/tts-studio/) — a single Python
+package that ships the backend, the pre-built web UI and the `tts-studio`
+command. Install it once:
 
 ```bash
 pip install tts-studio
@@ -17,7 +25,7 @@ pip install tts-studio
 Then launch it from any terminal:
 
 ```bash
-tts-studio
+tts-studio                                  # or: python -m tts_studio
 ```
 
 Your browser opens the studio automatically. Everything — the web UI, the
@@ -81,7 +89,9 @@ Models page.
 ## Requirements
 
 - Python 3.10 – 3.12 (Kokoro has no 3.13 wheels yet)
-- Node.js 20+ (only for building/serving the frontend yourself)
+- Nothing else for `pip install tts-studio` — every runtime dependency is
+  pulled in automatically and the web UI ships pre-built inside the package
+- Node.js 20+ and npm — only needed when developing the frontend from source
 - Optional NVIDIA GPU with CUDA for faster synthesis
 - Optional `ffmpeg` binary — only needed for the `mp3`, `opus` and `aac`
   output formats (`wav`, `flac` and `pcm` always work)
@@ -124,6 +134,30 @@ while `tts-studio` (or `./start.sh`) serves the API on :8000.
 3. Go to the **Studio**, choose an engine/voice, type text and hit Generate.
 4. Watch **Logs** for live backend activity.
 
+### Publishing a new release to PyPI
+
+The package lives at [pypi.org/project/tts-studio](https://pypi.org/project/tts-studio/).
+To ship a new release from this repo:
+
+1. Bump the version in **both** places — `pyproject.toml` and
+   `src/tts_studio/__init__.py` (the release script can do this for you).
+2. Rebuild the web UI and refresh the bundled copy — the wheel ships the
+   compiled frontend, so a release without a fresh `frontend_dist` would
+   serve a stale UI.
+3. Build the sdist + wheel and upload with [twine](https://twine.readthedocs.io/),
+   authenticating with a PyPI API token (username is the literal string
+   `__token__`; create tokens at pypi.org/manage/account/token).
+
+`scripts/release.sh` automates all of it — version bump, frontend rebuild,
+build, upload:
+
+```bash
+export TWINE_USERNAME="__token__"
+export TWINE_PASSWORD="pypi-<your-api-token>"
+
+./scripts/release.sh 1.0.1       # bump → rebuild UI → build → upload
+```
+
 ---
 
 ## OpenAI-compatible speech API
@@ -150,10 +184,10 @@ Everything lives under one prefix — your server origin plus `/v1`:
 
 | Deployment | Base URL |
 | --- | --- |
-| Default backend | `http://localhost:8000/v1` |
+| Default (`tts-studio` command) | `http://localhost:8000/v1` |
 | Custom host/port | `http://<host>:<port>/v1` |
 | Behind a reverse proxy | `https://<your-domain>/v1` |
-| Frontend dev server | `http://localhost:5173/v1` (proxied to the backend) |
+| Frontend dev server (development) | `http://localhost:5173/v1` (proxied to the backend) |
 
 ### Authentication — optional by default
 
@@ -396,7 +430,7 @@ config files to hand-edit:
    downloaded yet.
 3. **Defaults** — speaking speed (0.25 – 4.0), default output format, and the
    maximum input length in characters (default 4096).
-4. **Save** persists everything to `backend/data/api_config.json` and warms
+4. **Save** persists everything to `~/.tts-studio/api_config.json` and warms
    the engine up in the background.
 5. **API keys** — create, name, rate-limit, revoke and delete keys, with
    per-key usage counters, plus the **"Require an API key"** toggle.
@@ -429,10 +463,10 @@ Saved configuration shape (`PUT /api/openai/config` body):
 
 ### Storage & compatibility
 
-- `backend/data/api_config.json` — the single active configuration.
-- `backend/data/api_keys.json` — API keys with usage stats (stored in plain
+- `~/.tts-studio/api_config.json` — the single active configuration.
+- `~/.tts-studio/api_keys.json` — API keys with usage stats (stored in plain
   text by design: this is a local-first, single-user app).
-- `backend/data/api_audio/` — temporary render files, deleted right after
+- `~/.tts-studio/api_audio/` — temporary render files, deleted right after
   each response is streamed.
 - **Upgrading from the old mapping-based API?** `api_config.json` files with
   the legacy `mappings` schema are migrated automatically: the first enabled
