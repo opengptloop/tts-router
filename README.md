@@ -25,7 +25,7 @@ pip install tts-studio
 Then launch it from any terminal:
 
 ```bash
-tts-studio                                  # or: python -m tts_studio
+python -m tts_studio                                  # or: tts-studio
 ```
 
 Your browser opens the studio automatically. Everything — the web UI, the
